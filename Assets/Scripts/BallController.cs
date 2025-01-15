@@ -3,58 +3,34 @@ using UnityEngine;
 
 public class BallController : MonoBehaviour
 {
+    private InputManager _inputManager;
     private Rigidbody _rb;
-    private const float Speed = 5f;
-    private const float JumpForce = 5f;
+    [SerializeField] [Range(0, 10f)] private float speed = 5f;
+    [SerializeField] [Range(0, 10f)] private float jumpForce = 5f;
     private bool _midair = true;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         _rb = GetComponent<Rigidbody>();
+        _inputManager = GetComponent<InputManager>();
+        _inputManager.onMove.AddListener((Vector3 moveVector) =>
+        {
+            if (_midair) return;
+            if (Mathf.Abs(moveVector.y) > 0) _midair = true;
+            _rb.AddForce(
+                new Vector3(
+                    moveVector.x * speed * Time.deltaTime,
+                    moveVector.y * jumpForce,
+                    moveVector.z * speed * Time.deltaTime
+                ), 
+                ForceMode.Impulse
+            );
+        });
     }
-
-    // Update is called once per frame
+    
     void Update()
     {
-        var magnitude = Time.deltaTime * Speed;
-        var moveForce = Vector3.zero;
-        
-        if (Input.GetKey(KeyCode.W))
-        {
-            moveForce += Vector3.forward;
-            //transform.Translate(Vector3.forward * magnitude);
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            moveForce += Vector3.back;
-            //transform.Translate(Vector3.back * magnitude);
-        } 
-        if (Input.GetKey(KeyCode.A))
-        {
-            moveForce += Vector3.left;
-            //transform.Translate(Vector3.left * magnitude);
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            moveForce += Vector3.right;
-            //transform.Translate(Vector3.right * magnitude);
-        } 
-        
-        else if (Input.GetKey(KeyCode.Space))
-        {
-            if (!_midair)
-            {
-                _midair = true;
-                _rb.AddForce(Vector3.up * JumpForce, ForceMode.Impulse);
-            }
-        }
-
-        if (moveForce != Vector3.zero && !_midair)
-        {
-            _rb.AddForce(moveForce * magnitude, ForceMode.Impulse);
-        }
-
         if (!Physics.Raycast(transform.position, -Vector3.up, Mathf.Infinity))
         {
             transform.position = Vector3.up * 0.5f;
